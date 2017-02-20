@@ -1,8 +1,10 @@
 package org.filehide.filehidelibrary;
 
-class FHFileNotEncryptedException extends FHException {
+@SuppressWarnings("serial")
+class FHFileNotEncryptedException extends FHRuntimeException {
 
 	FHFileNotEncryptedException() {
 		super("The FHFile is not encrypted.");
 	}
+
 }

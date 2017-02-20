@@ -1,15 +1,12 @@
 package org.filehide.filehidelibrary;
 
 import java.io.File;
-import java.io.IOError;
 import java.io.RandomAccessFile;
-import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Random;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -29,8 +26,11 @@ import org.filehide.filehidelibrary.FHCipher.OperationMode;
  * 7. 13 bytes: ending magic number ({@code 0x41 0x6C 0x65 0x78 0x31 0x73 0x42 0x69 0x67 0x44 0x45 0x6E 0x64)
  * @author Alex1s
  */
-class FHFile extends File {
-	// magic numbers
+@SuppressWarnings("serial")
+public class FHFile extends File {
+	
+	// MARK magic numbers
+	
 	/**
 	 * The starting magic number of a FHFile.
 	 */
@@ -44,33 +44,49 @@ class FHFile extends File {
 	 */
 	static final byte[] FH_CRYPT = {0x46, 0x48, 0x43, 0x72, 0x79, 0x70, 0x74, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 	
-	// constants
+	
+	// MARK constants
+	
 	/**
 	 * The current file version that is supported by this version of FileHide.
 	 */
 	static final int CURRENT_FILE_VERSION = 0;
 	
-	// offsets
+	
+	// MARK offsets
+	
 	/**
 	 * The offset that points to the beginning of the hidden data.
 	 */
 	private long offsetStart;
+	
 	/**
 	 * The offset that points to the end of the hidden data.
 	 */
 	private long offsetEnd;
 	
-	// crypt
+	
+	// MARK crypt
+	
 	/**
 	 * Weather the file is encrypted or not.
 	 */
 	private boolean encrypted;
+	
 	/**
 	 * The CryptoBytes of the file. Only not null of the file is encrypted.
 	 * <p>
 	 * These bytes can be used to check if a password is correct to decrypt the hidden data.
 	 */
 	private byte[] cryptoBytes;
+	
+	
+	// MARK other
+	
+	/**
+	 * 
+	 */
+	private boolean hiddenDataDeleted = false;
 	
 	/**
 	 * Constructor for a FHFile.
@@ -142,17 +158,23 @@ class FHFile extends File {
 	}
 	
 	
+	// MARK public functions
+	
 	/**
 	 * Deletes the data hidden inside of this file.
 	 * <p>
 	 * Note: Do not use this object anymore in any way after this method has been called.
 	 * @throws IOException if an I/O error occurs
 	 */
-	void deleteHiddenData() throws IOException {
+	public void deleteHiddenData() throws IOException {
+		this.hiddenDataDeleted = true;
 		RandomAccessFile raf = new RandomAccessFile(this, "w");
 		raf.setLength(this.offsetStart());
 		raf.close();
 	}
+	
+	
+	// MARK password checking
 	
 	/**
 	 * Checks wheather the given password string can be used to decrypt the hidden data of this file.
@@ -160,7 +182,7 @@ class FHFile extends File {
 	 * @return true if the password can be used, false if not
 	 * @throws FHFileNotEncryptedException if the FHFile is not encrypted
 	 */
-	boolean checkPassword(String password) throws FHFileNotEncryptedException {
+	public boolean checkPassword(String password) throws FHFileNotEncryptedException {
 		return checkPassword(password.getBytes(FHCipher.CHARSET));
 	}
 	
@@ -168,9 +190,9 @@ class FHFile extends File {
 	 * Checks wheather the given password string can be used to decrypt the hidden data of this file.
 	 * @param password the given byte array password to check
 	 * @return true if the password can be used, false if not
-	 * @throws FHFileNotEncryptedException if the FHFile is not encrypted
 	 */
-	private boolean checkPassword(byte[] password) throws FHFileNotEncryptedException {
+	private boolean checkPassword(byte[] password) {
+		hiddenDataDeleted();
 		if(!this.encrypted()) throw new FHFileNotEncryptedException();
 		FHCipher cipher = new FHCipher(OperationMode.DECRYPT_MODE, password);
 		try {
@@ -181,6 +203,23 @@ class FHFile extends File {
 		return true;
 	}
 	
+	
+	// MARK extract hidden data (not password proteced)
+	
+	/**
+	 * Extracts the hidden data of this FHFile to the given Path and replaces any existing files.
+	 * @param to
+	 * @throws IOException
+	 */
+	public void extractHiddenData(Path to) throws IOException {
+		hiddenDataDeleted();
+		if(this.encrypted()) throw new FHFileEncryptedException();
+		Files.copy(new FHInputStream(this), to, StandardCopyOption.REPLACE_EXISTING);
+	}
+	
+	
+	// MARK extract hidden data (password protected)
+	
 	/**
 	 * Extracts the encrypted hidden data of this FHFile to the given Path and replaces any existing files.
 	 * @param to The path to where the hidden data should be extracted to
@@ -188,7 +227,7 @@ class FHFile extends File {
 	 * @throws FHFileNotEncryptedException if this FHFile is not encrypted
 	 * @throws IOException if an I/O error occurs
 	 */
-	void extractHiddenData(Path to, String password) throws FHFileNotEncryptedException, IOException {
+	public void extractHiddenData(Path to, String password) throws IOException {
 		extractHiddenData(to, password.getBytes(FHCipher.CHARSET));
 	}
 	
@@ -199,24 +238,44 @@ class FHFile extends File {
 	 * @throws FHFileNotEncryptedException if this FHFile is not encrypted
 	 * @throws IOException if an I/O error occurs
 	 */
-	void extractHiddenData(Path to, byte[] password) throws FHFileNotEncryptedException, IOException {
+	private void extractHiddenData(Path to, byte[] password) throws IOException {
+		hiddenDataDeleted();
 		if(!this.encrypted()) throw new FHFileNotEncryptedException();
 		Files.copy(new FHInputStream(this, new FHCipher(OperationMode.DECRYPT_MODE, password)), to, StandardCopyOption.REPLACE_EXISTING);
 	}
 	
+	
+	// MARK hide data in a file (inplace, not password protected)
+	
 	/**
-	 * Extracts the hidden data of this FHFile to the given Path and replaces any existing files.
-	 * @param to
-	 * @throws FHFileNotEncryptedException
-	 * @throws FHFileEncryptedException
-	 * @throws IOException
+	 * Hides a file inside a file and saves the result at a given location without touching the file the other file will be hidden in.
+	 * @param origin the file which contains the data to be hidden
+	 * @param toBehiddenIn the file which should contain the hidden file (will be left untouched)
+	 * @param whereToSave location to save the result
+	 * @return the created FHFile
+	 * @throws IOException if an I/O error occurs
+	 * @throws FHFileCreationFailedException if the creation of the FHFile failed
 	 */
-	void extractHiddenData(Path to) throws FHFileEncryptedException, IOException {
-		if(this.encrypted()) throw new FHFileEncryptedException();
-		Files.copy(new FHInputStream(this), to, StandardCopyOption.REPLACE_EXISTING);
+	public static FHFile hideFile(File origin, File toBehiddenIn, Path whereToSave) throws IOException, FHFileCreationFailedException {
+		Files.copy(toBehiddenIn.toPath(), whereToSave, StandardCopyOption.REPLACE_EXISTING);
+		try {
+			return hideFile(origin, whereToSave.toFile());
+		} catch (FHFileCreationFailedException e) {
+			// cleanup
+			Files.delete(whereToSave);
+			throw new FHFileCreationFailedException();
+		}
 	}
 	
-	static FHFile hideFile(File origin, File toBeHiddenIn) throws IOException, FHFileCreationFailedException {
+	/**
+	 * Hides a file inside a file.
+	 * @param origin the file which contains the data to be hidden
+	 * @param toBeHiddenIn the file which should contain the hidden file
+	 * @return the created FHFile
+	 * @throws IOException if an I/O error occurs
+	 * @throws FHFileCreationFailedException if the creation of the FHFile failed
+	 */
+	public static FHFile hideFile(File origin, File toBeHiddenIn) throws IOException, FHFileCreationFailedException {
 		long originalFileLegth = toBeHiddenIn.length();
 		Files.copy(toBeHiddenIn.toPath(), new FHOutputStream(origin));
 		try {
@@ -231,13 +290,15 @@ class FHFile extends File {
 		}
 	}
 	
-	//# MARK - getters
+	
+	// MARK getters
 	
 	/**
 	 * getter for offsetStart
 	 * @return
 	 */
 	long offsetStart() {
+		hiddenDataDeleted();
 		return this.offsetStart;
 	}
 	
@@ -246,6 +307,7 @@ class FHFile extends File {
 	 * @return
 	 */
 	long offsetEnd() {
+		hiddenDataDeleted();
 		return this.offsetEnd;
 	}
 	
@@ -255,20 +317,20 @@ class FHFile extends File {
 	 * @return
 	 */
 	boolean encrypted() {
+		hiddenDataDeleted();
 		return this.encrypted;
 	}
 	
 	/**
 	 * getter for cryptoBytes
 	 * @return
-	 * @throws FHFileNotEncryptedException 
 	 */
-	byte[] cryptoBytes() throws FHFileNotEncryptedException {
-		if(!this.encrypted()) throw new FHFileNotEncryptedException();
+	byte[] cryptoBytes() {
+		hiddenDataDeleted();
 		return this.cryptoBytes;
 	}
 	
-	//# MARK - computed constants
+	// MARK - computed constants
 	
 	/**
 	 * The length of the head of the hidden content.
@@ -284,4 +346,16 @@ class FHFile extends File {
 	int FH_END_LENGTH() {
 		return Long.BYTES + FH_END.length;
 	}
+	
+	// MARK helper functions
+	
+	/**
+	 * This functions checks wheather the hidden Data of this file have been removed and throws a NotFHFileAnymoreException if so.
+	 * @return flase, otherwise a RuntimeException will be trown
+	 */
+	private boolean hiddenDataDeleted() {
+		if(this.hiddenDataDeleted) throw new NotFHFileAnymoreException();
+		return false;
+	}
+
 }
