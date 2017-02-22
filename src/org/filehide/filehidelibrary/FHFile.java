@@ -291,6 +291,80 @@ public class FHFile extends File {
 	}
 	
 	
+	// MARK hide file in a file (passwordprotected)
+	
+	/**
+	 * Hides a file inside a file and saves the result at a given location without touching the file the other file will be hidden in.
+	 * @param origin the file which contains the data to be hidden
+	 * @param toBehiddenIn the file which should contain the hidden file (will be left untouched)
+	 * @param whereToSave location to save the result
+	 * @param password the password to encrypt the hidden data with
+	 * @return the created FHFile
+	 * @throws IOException if an I/O error occurs
+	 * @throws FHFileCreationFailedException if the creation of the FHFile failed
+	 */
+	public static FHFile hideFile(File origin, File destionation, Path whereToSave, String password) throws IOException, FHFileCreationFailedException {
+		return hideFile(origin, destionation, whereToSave, password.getBytes(FHCipher.CHARSET));
+	}
+	
+	/**
+	 * Hides a file inside a file and saves the result at a given location without touching the file the other file will be hidden in.
+	 * @param origin the file which contains the data to be hidden
+	 * @param toBehiddenIn the file which should contain the hidden file (will be left untouched)
+	 * @param whereToSave location to save the result
+	 * @param password the password to encrypt the hidden data with
+	 * @return the created FHFile
+	 * @throws IOException if an I/O error occurs
+	 * @throws FHFileCreationFailedException if the creation of the FHFile failed
+	 */
+	private static FHFile hideFile(File origin, File destionation, Path whereToSave, byte[] password) throws IOException, FHFileCreationFailedException {
+		Files.copy(origin.toPath(), whereToSave, StandardCopyOption.REPLACE_EXISTING);
+		try {
+			return hideFile(origin, whereToSave.toFile(), password);
+		} catch (FHFileCreationFailedException e) {
+			Files.delete(whereToSave);
+			
+			throw new FHFileCreationFailedException();
+		}
+	}
+	
+	/**
+	 * Hides a file inside a file.
+	 * @param origin the file which contains the data to be hidden
+	 * @param toBeHiddenIn the file which should contain the hidden file
+	 * @param password the password to encrypt the hidden data with
+	 * @return the created FHFile
+	 * @throws IOException if an I/O error occurs
+	 * @throws FHFileCreationFailedException if the creation of the FHFile failed
+	 */
+	public static FHFile hideFile(File origin, File destination, String password) throws IOException, FHFileCreationFailedException {
+		return hideFile(origin, destination, password.getBytes(FHCipher.CHARSET));
+	}
+	
+	/**
+	 * Hides a file inside a file.
+	 * @param origin the file which contains the data to be hidden
+	 * @param toBeHiddenIn the file which should contain the hidden file
+	 * @param password the password to encrypt the hidden data with
+	 * @return the created FHFile
+	 * @throws IOException if an I/O error occurs
+	 * @throws FHFileCreationFailedException if the creation of the FHFile failed
+	 */
+	private static FHFile hideFile(File origin, File destination, byte[] password) throws IOException, FHFileCreationFailedException {
+		long originalFileLength = destination.length();
+		Files.copy(origin.toPath(), new FHOutputStream(destination, password));
+		try {
+			return new FHFile(destination);
+		} catch (NotFHFileException | FHFileCorruptException | IncompatibleFHFileVersionException e) {
+			// cleanup
+			RandomAccessFile raf = new RandomAccessFile(destination, "w");
+			raf.setLength(originalFileLength);
+			raf.close();
+			
+			throw new FHFileCreationFailedException();
+		}
+	}
+	
 	// MARK getters
 	
 	/**
