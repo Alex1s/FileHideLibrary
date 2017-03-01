@@ -1,7 +1,7 @@
 package org.filehide.filehidelibrary;
 
 @SuppressWarnings("serial")
-class FHRuntimeException extends RuntimeException {
+public class FHRuntimeException extends RuntimeException {
 
 	public FHRuntimeException() {
 	}

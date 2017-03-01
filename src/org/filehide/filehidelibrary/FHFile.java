@@ -390,7 +390,7 @@ public class FHFile extends File {
 	 * getter for encrypted
 	 * @return
 	 */
-	boolean encrypted() {
+	public boolean encrypted() {
 		hiddenDataDeleted();
 		return this.encrypted;
 	}

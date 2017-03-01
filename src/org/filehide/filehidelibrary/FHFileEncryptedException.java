@@ -5,7 +5,7 @@ package org.filehide.filehidelibrary;
  * @author alex1s
  */
 @SuppressWarnings("serial")
-class FHFileEncryptedException extends FHRuntimeException {
+public class FHFileEncryptedException extends FHRuntimeException {
 
 	public FHFileEncryptedException() {
 		super("The FHFile is encrypted. A valid password is needed to read it´s content.");
