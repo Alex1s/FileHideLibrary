@@ -1,28 +1,18 @@
 package org.filehide.filehidelibrary;
 
 /**
- * This class is the general class of exceptions produced by failed or interrupted FileHide operations.
+ * Signals that an FH exception of some sort has occurred. This class is the general class of exceptions produced by failed or interrupted FH operations.
  * @author alex1s
  */
+@SuppressWarnings("serial")
 public class FHException extends Exception {
 
-	public FHException() {
-	}
-
-	public FHException(String message) {
+	/**
+	 * Constructs an {@code FHException} with the specified detail message.
+	 * @param message The detail message (which is saved for later retrieval by the {@link #getMessage()} method)
+	 */
+	FHException(String message) {
 		super(message);
-	}
-
-	public FHException(Throwable cause) {
-		super(cause);
-	}
-
-	public FHException(String message, Throwable cause) {
-		super(message, cause);
-	}
-
-	public FHException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-		super(message, cause, enableSuppression, writableStackTrace);
 	}
 
 }
