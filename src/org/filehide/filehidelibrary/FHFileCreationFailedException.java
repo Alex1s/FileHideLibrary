@@ -10,7 +10,7 @@ package org.filehide.filehidelibrary;
 public class FHFileCreationFailedException extends FHException {
 
 	/**
-	 * Constructs a {@code FHFileCreationFailedException} with a appropriate detail message. The string s can be retrieved later by the {@link #getMessage()} method.
+	 * Constructs a {@code FHFileCreationFailedException} with a appropriate detail message. The detail message can be retrieved later by the {@link #getMessage()} method.
 	 */
 	FHFileCreationFailedException() {
 		super("The creation of the FHFile has failed");

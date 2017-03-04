@@ -180,9 +180,9 @@ public class FHFile extends File {
 	 * Checks wheather the given password string can be used to decrypt the hidden data of this file.
 	 * @param password the password string to check
 	 * @return true if the password can be used, false if not
-	 * @throws FHFileNotEncryptedException if the FHFile is not encrypted
+	 * @throws FHFileUnencryptedException if the FHFile is not encrypted
 	 */
-	public boolean checkPassword(String password) throws FHFileNotEncryptedException {
+	public boolean checkPassword(String password) throws FHFileUnencryptedException {
 		return checkPassword(password.getBytes(FHCipher.CHARSET));
 	}
 	
@@ -193,7 +193,7 @@ public class FHFile extends File {
 	 */
 	private boolean checkPassword(byte[] password) {
 		hiddenDataDeleted();
-		if(!this.encrypted()) throw new FHFileNotEncryptedException();
+		if(!this.encrypted()) throw new FHFileUnencryptedException();
 		FHCipher cipher = new FHCipher(OperationMode.DECRYPT_MODE, password);
 		try {
 			cipher.getCipher().doFinal(this.cryptoBytes);
@@ -224,7 +224,7 @@ public class FHFile extends File {
 	 * Extracts the encrypted hidden data of this FHFile to the given Path and replaces any existing files.
 	 * @param to The path to where the hidden data should be extracted to
 	 * @param password The password whith which the hidden data is encrypted with.
-	 * @throws FHFileNotEncryptedException if this FHFile is not encrypted
+	 * @throws FHFileUnencryptedException if this FHFile is not encrypted
 	 * @throws IOException if an I/O error occurs
 	 */
 	public void extractHiddenData(Path to, String password) throws IOException {
@@ -240,7 +240,7 @@ public class FHFile extends File {
 	 */
 	private void extractHiddenData(Path to, byte[] password) throws IOException {
 		hiddenDataDeleted();
-		if(!this.encrypted()) throw new FHFileNotEncryptedException();
+		if(!this.encrypted()) throw new FHFileUnencryptedException();
 		Files.copy(new FHInputStream(this, new FHCipher(OperationMode.DECRYPT_MODE, password)), to, StandardCopyOption.REPLACE_EXISTING);
 	}
 	

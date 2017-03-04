@@ -105,7 +105,7 @@ class Main {
 		} catch (IncompatibleFHFileVersionException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} catch (FHFileNotEncryptedException e) {
+		} catch (FHFileUnencryptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (FHFileEncryptedException e) {

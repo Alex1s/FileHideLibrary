@@ -8,7 +8,7 @@ package org.filehide.filehidelibrary;
 public class FHFileCorruptException extends FHException {
 
 	/**
-	 * Constructs a {@code FHFileCorruptException} with a appropriate detail message. The string s can be retrieved later by the {@link #getMessage()} method.
+	 * Constructs a {@code FHFileCorruptException} with a appropriate detail message. The detail message can be retrieved later by the {@link #getMessage()} method.
 	 */
 	FHFileCorruptException() {
 		super("The FHFile is corrupted.");

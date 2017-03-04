@@ -12,10 +12,10 @@ import java.nio.file.Path;
 public class FHFileEncryptedException extends FHRuntimeException {
 
 	/**
-	 * Constructs a {@code FHFileEncryptedException} with a appropriate detail message. The string s can be retrieved later by the {@link #Throwable.getMessage()} method.
+	 * Constructs a {@code FHFileEncryptedException} with a appropriate detail message. The string s can be retrieved later by the {@link #getMessage()} method.
 	 */
 	FHFileEncryptedException() {
-		super("The FHFile is encrypted. A valid password is needed to read it´s content.");
+		super("The FHFile is encrypted. A valid password is needed to read its hidden file.");
 	}
 
 }

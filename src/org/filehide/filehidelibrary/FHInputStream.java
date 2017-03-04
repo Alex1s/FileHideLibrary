@@ -50,11 +50,11 @@ class FHInputStream extends FilterInputStream {
 	 * @param file - a encrpyted FHFile
 	 * @param cipher - a fully FHCipher
 	 * @throws IOException if an I/O error occurs
-	 * @throws FHFileNotEncryptedException 
+	 * @throws FHFileUnencryptedException 
 	 */
-	FHInputStream(FHFile file, FHCipher cipher) throws IOException, FHFileNotEncryptedException {
+	FHInputStream(FHFile file, FHCipher cipher) throws IOException, FHFileUnencryptedException {
 		super(initSuper(file, cipher));
-		if(!file.encrypted()) throw new FHFileNotEncryptedException();
+		if(!file.encrypted()) throw new FHFileUnencryptedException();
 		
 		this.file = file;
 		this.read = file.offsetStart();
@@ -68,7 +68,7 @@ class FHInputStream extends FilterInputStream {
 	 * @param cipher - a FHCipher (should be null if the FHFile is unencrpyted)
 	 * @return - the InputStream to initialize super with
 	 * @throws IOException - if an I/O error occurs
-	 * @throws FHFileNotEncryptedException 
+	 * @throws FHFileUnencryptedException 
 	 * @throws FHFileEncryptedException 
 	 */
 	private static InputStream initSuper(FHFile file, FHCipher cipher) throws IOException {
