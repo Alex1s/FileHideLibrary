@@ -23,7 +23,7 @@ import javax.xml.bind.DatatypeConverter;
 
 import org.filehide.filehidelibrary.FHCipher.OperationMode;
 
-class Main {
+class Test {
 	
 	private static String password = "mein_Passwort";
 	

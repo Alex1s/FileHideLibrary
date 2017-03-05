@@ -14,3 +14,6 @@ hs_err_pid*
 
 # macOS
 .DS_Store
+
+# for testing
+/src/org/filehide/filehidelibrary/Test.java
