@@ -208,13 +208,13 @@ public class FHFile extends File {
 	
 	/**
 	 * Extracts the hidden data of this FHFile to the given Path and replaces any existing files.
-	 * @param to
+	 * @param destination
 	 * @throws IOException
 	 */
-	public void extractHiddenData(Path to) throws IOException {
+	public void extractHiddenData(Path destination) throws IOException {
 		hiddenDataDeleted();
 		if(this.encrypted()) throw new FHFileEncryptedException();
-		Files.copy(new FHInputStream(this), to, StandardCopyOption.REPLACE_EXISTING);
+		Files.copy(new FHInputStream(this), destination, StandardCopyOption.REPLACE_EXISTING);
 	}
 	
 	
@@ -222,13 +222,13 @@ public class FHFile extends File {
 	
 	/**
 	 * Extracts the encrypted hidden data of this FHFile to the given Path and replaces any existing files.
-	 * @param to The path to where the hidden data should be extracted to
+	 * @param destination The path to where the hidden data should be extracted to
 	 * @param password The password whith which the hidden data is encrypted with.
 	 * @throws FHFileUnencryptedException if this FHFile is not encrypted
 	 * @throws IOException if an I/O error occurs
 	 */
-	public void extractHiddenData(Path to, String password) throws IOException {
-		extractHiddenData(to, password.getBytes(FHCipher.CHARSET));
+	public void extractHiddenData(Path destination, String password) throws IOException {
+		extractHiddenData(destination, password.getBytes(FHCipher.CHARSET));
 	}
 	
 	/*
@@ -238,10 +238,10 @@ public class FHFile extends File {
 	 * @throws FHFileNotEncryptedException if this FHFile is not encrypted
 	 * @throws IOException if an I/O error occurs
 	 */
-	private void extractHiddenData(Path to, byte[] password) throws IOException {
+	private void extractHiddenData(Path destination, byte[] password) throws IOException {
 		hiddenDataDeleted();
 		if(!this.encrypted()) throw new FHFileUnencryptedException();
-		Files.copy(new FHInputStream(this, new FHCipher(OperationMode.DECRYPT_MODE, password)), to, StandardCopyOption.REPLACE_EXISTING);
+		Files.copy(new FHInputStream(this, new FHCipher(OperationMode.DECRYPT_MODE, password)), destination, StandardCopyOption.REPLACE_EXISTING);
 	}
 	
 	
@@ -250,19 +250,19 @@ public class FHFile extends File {
 	/**
 	 * Hides a file inside a file and saves the result at a given location without touching the file the other file will be hidden in.
 	 * @param origin the file which contains the data to be hidden
-	 * @param toBehiddenIn the file which should contain the hidden file (will be left untouched)
-	 * @param whereToSave location to save the result
+	 * @param destination the file which should contain the hidden file (will be left untouched)
+	 * @param finalDestination location to save the result
 	 * @return the created FHFile
 	 * @throws IOException if an I/O error occurs
 	 * @throws FHFileCreationFailedException if the creation of the FHFile failed
 	 */
-	public static FHFile hideFile(File origin, File toBehiddenIn, Path whereToSave) throws IOException, FHFileCreationFailedException {
-		Files.copy(toBehiddenIn.toPath(), whereToSave, StandardCopyOption.REPLACE_EXISTING);
+	public static FHFile hideFile(File origin, File destination, Path finalDestination) throws IOException, FHFileCreationFailedException {
+		Files.copy(destination.toPath(), finalDestination, StandardCopyOption.REPLACE_EXISTING);
 		try {
-			return hideFile(origin, whereToSave.toFile());
+			return hideFile(origin, finalDestination.toFile());
 		} catch (FHFileCreationFailedException e) {
 			// cleanup
-			Files.delete(whereToSave);
+			Files.delete(finalDestination);
 			throw new FHFileCreationFailedException();
 		}
 	}
@@ -270,19 +270,24 @@ public class FHFile extends File {
 	/**
 	 * Hides a file inside a file.
 	 * @param origin the file which contains the data to be hidden
-	 * @param toBeHiddenIn the file which should contain the hidden file
+	 * @param destination the file which should contain the hidden file
 	 * @return the created FHFile
 	 * @throws IOException if an I/O error occurs
 	 * @throws FHFileCreationFailedException if the creation of the FHFile failed
 	 */
-	public static FHFile hideFile(File origin, File toBeHiddenIn) throws IOException, FHFileCreationFailedException {
-		long originalFileLegth = toBeHiddenIn.length();
-		Files.copy(toBeHiddenIn.toPath(), new FHOutputStream(origin));
+	public static FHFile hideFile(File origin, File destination) throws IOException, FHFileCreationFailedException {
+		long originalFileLegth = destination.length();
+		
+		FHOutputStream out = new FHOutputStream(destination);
+		Files.copy(origin.toPath(), out);
+		out.flush();
+		out.close();
+		
 		try {
-			return new FHFile(toBeHiddenIn);
+			return new FHFile(new File(destination.toPath().toString()));
 		} catch (NotFHFileException | FHFileCorruptException | IncompatibleFHFileVersionException e) {
 			// cleanup
-			RandomAccessFile raf = new RandomAccessFile(toBeHiddenIn, "w");
+			RandomAccessFile raf = new RandomAccessFile(destination, "rw");
 			raf.setLength(originalFileLegth);
 			raf.close();
 			
@@ -297,32 +302,32 @@ public class FHFile extends File {
 	 * Hides a file inside a file and saves the result at a given location without touching the file the other file will be hidden in.
 	 * @param origin the file which contains the data to be hidden
 	 * @param toBehiddenIn the file which should contain the hidden file (will be left untouched)
-	 * @param whereToSave location to save the result
+	 * @param finalDestination location to save the result
 	 * @param password the password to encrypt the hidden data with
 	 * @return the created FHFile
 	 * @throws IOException if an I/O error occurs
 	 * @throws FHFileCreationFailedException if the creation of the FHFile failed
 	 */
-	public static FHFile hideFile(File origin, File destionation, Path whereToSave, String password) throws IOException, FHFileCreationFailedException {
-		return hideFile(origin, destionation, whereToSave, password.getBytes(FHCipher.CHARSET));
+	public static FHFile hideFile(File origin, File destionation, Path finalDestination, String password) throws IOException, FHFileCreationFailedException {
+		return hideFile(origin, destionation, finalDestination, password.getBytes(FHCipher.CHARSET));
 	}
 	
 	/**
 	 * Hides a file inside a file and saves the result at a given location without touching the file the other file will be hidden in.
 	 * @param origin the file which contains the data to be hidden
 	 * @param toBehiddenIn the file which should contain the hidden file (will be left untouched)
-	 * @param whereToSave location to save the result
+	 * @param finalDestination location to save the result
 	 * @param password the password to encrypt the hidden data with
 	 * @return the created FHFile
 	 * @throws IOException if an I/O error occurs
 	 * @throws FHFileCreationFailedException if the creation of the FHFile failed
 	 */
-	private static FHFile hideFile(File origin, File destionation, Path whereToSave, byte[] password) throws IOException, FHFileCreationFailedException {
-		Files.copy(origin.toPath(), whereToSave, StandardCopyOption.REPLACE_EXISTING);
+	private static FHFile hideFile(File origin, File destionation, Path finalDestination, byte[] password) throws IOException, FHFileCreationFailedException {
+		Files.copy(origin.toPath(), finalDestination, StandardCopyOption.REPLACE_EXISTING);
 		try {
-			return hideFile(origin, whereToSave.toFile(), password);
+			return hideFile(origin, finalDestination.toFile(), password);
 		} catch (FHFileCreationFailedException e) {
-			Files.delete(whereToSave);
+			Files.delete(finalDestination);
 			
 			throw new FHFileCreationFailedException();
 		}
@@ -352,12 +357,17 @@ public class FHFile extends File {
 	 */
 	private static FHFile hideFile(File origin, File destination, byte[] password) throws IOException, FHFileCreationFailedException {
 		long originalFileLength = destination.length();
-		Files.copy(origin.toPath(), new FHOutputStream(destination, password));
+		
+		FHOutputStream out = new FHOutputStream(destination, password);
+		Files.copy(origin.toPath(), out);
+		out.flush();
+		out.close();
+		
 		try {
 			return new FHFile(destination);
 		} catch (NotFHFileException | FHFileCorruptException | IncompatibleFHFileVersionException e) {
 			// cleanup
-			RandomAccessFile raf = new RandomAccessFile(destination, "w");
+			RandomAccessFile raf = new RandomAccessFile(destination, "rw");
 			raf.setLength(originalFileLength);
 			raf.close();
 			

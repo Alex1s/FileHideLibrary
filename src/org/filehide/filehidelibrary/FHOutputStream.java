@@ -37,6 +37,35 @@ class FHOutputStream extends FilterOutputStream {
 	//# MARK - constructors
 	
 	/**
+	 * Constructor for an unencrpyted output stream.
+	 * @param file the file to write the hidden data to
+	 * @throws IOException if an I/O error occurs
+	 */
+	FHOutputStream(File file) throws IOException {
+		this(file, null, false);
+	}
+	
+	/**
+	 * Constructor for an encrypted output stream using a String as password.
+	 * @param file file the file to write the hidden data to
+	 * @param password the password the password to decrypt hidden data with
+	 * @throws IOException if an I/O error occurs
+	 */
+	FHOutputStream(File file, String password) throws IOException {
+		this(file, password.getBytes(FHCipher.CHARSET));
+	}
+	
+	/**
+	 * Constructor for an encrypted output stream using raw bytes as password.
+	 * @param file file the file to write the hidden data to
+	 * @param password the password to decrypt hidden data with
+	 * @throws IOException if an I/O error occurs
+	 */
+	FHOutputStream(File file, byte[] password) throws IOException {
+		this(file, new FHCipher(OperationMode.ENCRYPT_MODE, password), false);
+	}
+	
+	/**
 	 * The private main constructor that is beeing by the public ones.
 	 * @param file the file to write the hidden data to
 	 * @param cipher the cipher used to decrypt with hidden data
@@ -54,34 +83,8 @@ class FHOutputStream extends FilterOutputStream {
 		writeEncrypted(true);
 	}
 	
-	/**
-	 * Constructor for an unencrpyted output stream.
-	 * @param file the file to write the hidden data to
-	 * @throws IOException if an I/O error occurs
-	 */
-	FHOutputStream(File file) throws IOException {
-		this(file, null, false);
-	}
+
 	
-	/**
-	 * Constructor for an encrypted output stream using raw bytes as password.
-	 * @param file file the file to write the hidden data to
-	 * @param password the password to decrypt hidden data with
-	 * @throws IOException if an I/O error occurs
-	 */
-	FHOutputStream(File file, byte[] password) throws IOException {
-		this(file, new FHCipher(OperationMode.ENCRYPT_MODE, password), true);
-	}
-	
-	/**
-	 * Constructor for an encrypted output stream using a String as password.
-	 * @param file file the file to write the hidden data to
-	 * @param password the password the password to decrypt hidden data with
-	 * @throws IOException if an I/O error occurs
-	 */
-	FHOutputStream(File file, String password) throws IOException {
-		this(file, new FHCipher(OperationMode.ENCRYPT_MODE, password), true);
-	}
 	
 	@Override // writes the end of the FHFile and then closes the stream
 	public void close() throws IOException {
