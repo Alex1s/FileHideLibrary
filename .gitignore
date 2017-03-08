@@ -17,3 +17,4 @@ hs_err_pid*
 
 # for testing
 src/org/filehide/filehidelibrary/Test.java
+test_data/
