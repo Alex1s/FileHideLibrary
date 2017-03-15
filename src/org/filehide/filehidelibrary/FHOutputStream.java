@@ -126,12 +126,14 @@ class FHOutputStream extends FilterOutputStream {
 				if(this.cipher == null) return; // return as there is no cipher eg. it is not wished that the data should get encrypted
 				if(this.encrypt) return; // return if already writing encrypted
 				
+				this.out.flush();
 				this.out.close();
 				this.out = new DataOutputStream(new CipherOutputStream(new BufferedOutputStream(new FileOutputStream(this.file, true)), this.cipher.getCipher()));
 				this.encrypt = true;
 			} else {
 				if(!this.encrypt) return; // return if already not writing encrypted
 				
+				this.out.flush();
 				this.out.close();
 				this.out = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(this.file, true)));
 				this.encrypt = false;

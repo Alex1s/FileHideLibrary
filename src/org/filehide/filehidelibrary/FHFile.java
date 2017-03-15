@@ -3,7 +3,6 @@ package org.filehide.filehidelibrary;
 import java.io.File;
 import java.io.RandomAccessFile;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.io.IOException;
 import java.util.Arrays;
@@ -211,10 +210,13 @@ public class FHFile extends File {
 	 * @param destination
 	 * @throws IOException
 	 */
-	public void extractHiddenData(Path destination) throws IOException {
+	public void extractHiddenData(File destination) throws IOException {
 		hiddenDataDeleted();
 		if(this.encrypted()) throw new FHFileEncryptedException();
-		Files.copy(new FHInputStream(this), destination, StandardCopyOption.REPLACE_EXISTING);
+		
+		FHInputStream in = new FHInputStream(this);
+		Files.copy(in, destination.toPath(), StandardCopyOption.REPLACE_EXISTING);
+		in.close();
 	}
 	
 	
@@ -227,7 +229,7 @@ public class FHFile extends File {
 	 * @throws FHFileUnencryptedException if this FHFile is not encrypted
 	 * @throws IOException if an I/O error occurs
 	 */
-	public void extractHiddenData(Path destination, String password) throws IOException {
+	public void extractHiddenData(File destination, String password) throws IOException {
 		extractHiddenData(destination, password.getBytes(FHCipher.CHARSET));
 	}
 	
@@ -238,10 +240,13 @@ public class FHFile extends File {
 	 * @throws FHFileNotEncryptedException if this FHFile is not encrypted
 	 * @throws IOException if an I/O error occurs
 	 */
-	private void extractHiddenData(Path destination, byte[] password) throws IOException {
+	private void extractHiddenData(File destination, byte[] password) throws IOException {
 		hiddenDataDeleted();
 		if(!this.encrypted()) throw new FHFileUnencryptedException();
-		Files.copy(new FHInputStream(this, new FHCipher(OperationMode.DECRYPT_MODE, password)), destination, StandardCopyOption.REPLACE_EXISTING);
+		
+		FHInputStream in = new FHInputStream(this, new FHCipher(OperationMode.DECRYPT_MODE, password));
+		Files.copy(in, destination.toPath(), StandardCopyOption.REPLACE_EXISTING);
+		in.close();
 	}
 	
 	
@@ -256,14 +261,14 @@ public class FHFile extends File {
 	 * @throws IOException if an I/O error occurs
 	 * @throws FHFileCreationFailedException if the creation of the FHFile failed
 	 */
-	public static FHFile hide(File origin, File destination, Path finalDestination) throws IOException, FHFileCreationFailedException {
-		Files.copy(destination.toPath(), finalDestination, StandardCopyOption.REPLACE_EXISTING);
+	public static FHFile hide(File origin, File destination, File finalDestination) throws IOException, FHFileCreationFailedException {
+		Files.copy(destination.toPath(), finalDestination.toPath(), StandardCopyOption.REPLACE_EXISTING);
 		try {
-			return hide(origin, finalDestination.toFile());
+			return hide(origin, finalDestination);
 		} catch (FHFileCreationFailedException e) {
 			// cleanup
-			Files.delete(finalDestination);
-			throw new FHFileCreationFailedException();
+			Files.delete(finalDestination.toPath());
+			throw e;
 		}
 	}
 	
@@ -308,7 +313,7 @@ public class FHFile extends File {
 	 * @throws IOException if an I/O error occurs
 	 * @throws FHFileCreationFailedException if the creation of the FHFile failed
 	 */
-	public static FHFile hide(File origin, File destionation, Path finalDestination, String password) throws IOException, FHFileCreationFailedException {
+	public static FHFile hide(File origin, File destionation, File finalDestination, String password) throws IOException, FHFileCreationFailedException {
 		return hide(origin, destionation, finalDestination, password.getBytes(FHCipher.CHARSET));
 	}
 	
@@ -322,14 +327,14 @@ public class FHFile extends File {
 	 * @throws IOException if an I/O error occurs
 	 * @throws FHFileCreationFailedException if the creation of the FHFile failed
 	 */
-	private static FHFile hide(File origin, File destionation, Path finalDestination, byte[] password) throws IOException, FHFileCreationFailedException {
-		Files.copy(origin.toPath(), finalDestination, StandardCopyOption.REPLACE_EXISTING);
+	private static FHFile hide(File origin, File destionation, File finalDestination, byte[] password) throws IOException, FHFileCreationFailedException {
+		Files.copy(origin.toPath(), finalDestination.toPath(), StandardCopyOption.REPLACE_EXISTING);
 		try {
-			return hide(origin, finalDestination.toFile(), password);
+			return hide(origin, finalDestination, password);
 		} catch (FHFileCreationFailedException e) {
-			Files.delete(finalDestination);
-			
-			throw new FHFileCreationFailedException();
+			// cleanup
+			Files.delete(finalDestination.toPath());
+			throw e;
 		}
 	}
 	
